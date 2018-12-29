@@ -9,7 +9,13 @@ $database = new Medoo ([
 'database_file' => '../storage/database.db'
 ]);
 
-//dump($database);
+$comment = new guestbook\Comment($database);
+$comment->setEmail('andypalms@mail.com')
+        ->setName('Andy Palms')
+        ->setComment('It really works!')
+        ->setComment('Hooray! Saving comments works!')
+        ->save();
+//dump($database->error());
 
 ?>
 

@@ -9,6 +9,11 @@
             "email": "andypalms@mail.com"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "guestbook\\": "src/"
+        }
+    },
     "require": {
         "catfan/medoo": "^1.6"
     },
