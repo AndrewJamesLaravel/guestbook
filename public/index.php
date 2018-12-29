@@ -1,5 +1,6 @@
 <?php
 
+use Particle\Validator\Validator;
 require_once '../vendor/autoload.php';
 
 use Medoo\Medoo;
@@ -10,16 +11,37 @@ if (is_writable('../storage/database.local.db')) {
 }
 $database = new Medoo ([
     'database_type' => 'sqlite',
-'database_file' => $file
+    'database_file' => $file
 ]);
 
 $comment = new guestbook\Comment($database);
-$comment->setEmail('andypalms@mail.com')
-        ->setName('Andy Palms')
-        ->setComment('It really works!')
-        ->setComment('Hooray! Saving comments works!')
-        ->save();
-//dump($database->error());
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $v = new Validator();
+    $v->required('name')->lengthBetween(1, 100)->alnum(true);
+    $v->required('email')->email()->lengthBetween(5, 255);
+    $v->required('comment')->lengthBetween(10, null);
+
+    $result = $v->validate($_POST);
+
+    if ($result->isValid()) {
+        try {
+            $comment
+                ->setName($_POST['name'])
+                ->setEmail($_POST['email'])
+                ->setComment($_POST['comment'])
+                ->save();
+
+            header('Location: /');
+            return;
+
+        } catch (\Exception $e) {
+            die($e->getMessage());
+        }
+    } else {
+        dump($result->getMessages());
+    }
+}
 
 ?>
 
@@ -39,6 +61,7 @@ $comment->setEmail('andypalms@mail.com')
 
   <link rel="stylesheet" href="css/normalize.css">
   <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/custom.css">
 </head>
 
 <body>
@@ -47,6 +70,15 @@ $comment->setEmail('andypalms@mail.com')
   <![endif]-->
 
   <!-- Add your site or application content here -->
+  <?php foreach ($comment->findAll() as $comment) : ?>
+
+    <div class="comment">
+        <h3>On <?= $comment->getSubmissionDate() ?>, <?= $comment->getName() ?> wrote:</h3>
+            <p><?= $comment->getComment(); ?></p>
+    </div>
+
+  <?php endforeach; ?>
+
   <form method="post">
       <label>Name: <input type="text" name="name" placeholder="Your name"></label>
       <label>Email: <input type="text" name="email" placeholder="youremail@mail.com"></label>
